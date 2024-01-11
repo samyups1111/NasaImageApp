@@ -1,25 +1,22 @@
 package com.example.nasaimageapp.model
 
-import com.example.nasaimageapp.networking.NasaImageService
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
 
 class NasaImageRepository @Inject constructor(
-    private val nasaImageService: NasaImageService,
-    private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO,
+    private val nasaImagePagingSource: NasaImagePagingSource,
 ) {
 
-    suspend fun getImagesFromNetwork(): List<NasaImage> = withContext(coroutineDispatcher) {
-
-        val response = nasaImageService.getNasaImages()
-        val body = response.body()
-        if (response.isSuccessful && body != null) {
-            val items = body.collection.items
-            items.toNasaImageDataList()
-        } else {
-            emptyList()
-        }
+    fun getNasaImages(): Flow<PagingData<NasaImage>> {
+        return Pager(
+            config = PagingConfig(
+                pageSize = 100,
+                prefetchDistance = 2,
+            ),
+            pagingSourceFactory = { nasaImagePagingSource }
+        ).flow
     }
 }

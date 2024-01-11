@@ -5,57 +5,65 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.example.nasaimageapp.model.GetNasaImagesUseCase
 import com.example.nasaimageapp.model.NasaImage
-import com.example.nasaimageapp.model.NasaImageRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
 class NasaImageGridScreenViewModel @Inject constructor(
-    private val nasaImageRepository: NasaImageRepository
+    private val getNasaImagesUseCase: GetNasaImagesUseCase,
 ) : ViewModel() {
 
-    init {
-        getNasaImages()
-    }
-
-    var uiState by mutableStateOf<NasaImageGridScreenState>(NasaImageGridScreenState.Loading)
+    var imageListState: MutableStateFlow<PagingData<NasaImage>> = MutableStateFlow(PagingData.empty())
         private set
 
     var bottomSheetState by mutableStateOf<BottomSheetState>(BottomSheetState.HIDE)
         private set
 
-    private fun getNasaImages() {
+    init {
+        onLoad()
+    }
+
+    private fun onLoad() {
         viewModelScope.launch {
-            val nasaImages = nasaImageRepository.getImagesFromNetwork()
-            uiState = NasaImageGridScreenState.Success(nasaImages)
+            getNasaImages()
         }
+    }
+
+    private suspend fun getNasaImages() {
+        getNasaImagesUseCase.invoke()
+            .distinctUntilChanged()
+            .cachedIn(viewModelScope)
+            .collect {
+                imageListState.value = it
+            }
     }
 
     fun hideBottomSheet() {
         bottomSheetState = BottomSheetState.HIDE
     }
 
-    fun showBottomSheet(id: String) {
-        val selectedImage =
-            (uiState as NasaImageGridScreenState.Success).images.first { it.id == id }
+    fun showBottomSheet(
+        title: String,
+        url: String,
+        description: String,
+        photographer: String,
+        location: String,
+    ) {
         bottomSheetState = BottomSheetState.SHOW(
-            title = selectedImage.title,
-            url = selectedImage.url,
-            description = selectedImage.description,
-            photographer = selectedImage.photographer,
-            location = selectedImage.location,
+            title = title,
+            url = url,
+            description = description,
+            photographer = photographer,
+            location = location
         )
     }
-}
-
-sealed class NasaImageGridScreenState {
-    object Loading : NasaImageGridScreenState()
-
-    data class Success(
-        val images: List<NasaImage>
-    ) : NasaImageGridScreenState()
 }
 
 sealed class BottomSheetState {

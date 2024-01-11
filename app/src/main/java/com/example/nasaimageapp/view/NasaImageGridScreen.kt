@@ -5,13 +5,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.nasaimageapp.model.NasaImage
@@ -21,11 +23,13 @@ fun NasaImageGridScreen(
     modifier: Modifier = Modifier,
     viewModel: NasaImageGridScreenViewModel = hiltViewModel(),
 ) {
-    when (viewModel.uiState) {
-        is NasaImageGridScreenState.Success -> {
+    val nasaImagePagingItems: LazyPagingItems<NasaImage> = viewModel.imageListState.collectAsLazyPagingItems()
+
+    when (nasaImagePagingItems.loadState.refresh) {
+        is LoadState.NotLoading -> {
             NasaImageGrid(
-                images = (viewModel.uiState as NasaImageGridScreenState.Success).images,
-                onShowBottomSheet = { id: String -> viewModel.showBottomSheet(id) },
+                images = nasaImagePagingItems,
+                onShowBottomSheet = { title: String, url: String, description: String, photographer: String, location: String -> viewModel.showBottomSheet(title, url, description, photographer, location) },
                 modifier = modifier,
             )
             if (viewModel.bottomSheetState is BottomSheetState.SHOW) {
@@ -39,8 +43,12 @@ fun NasaImageGridScreen(
                 )
             }
         }
-        is NasaImageGridScreenState.Loading -> {
+        is LoadState.Loading -> {
             Text(text = "Fetching data. Please wait...")
+        }
+
+        else -> {
+            Text(text = "An error has occurred. Please try again later.")
         }
     }
 }
@@ -48,8 +56,8 @@ fun NasaImageGridScreen(
 @OptIn(ExperimentalGlideComposeApi::class)
 @Composable
 fun NasaImageGrid(
-    images: List<NasaImage>,
-    onShowBottomSheet: (id: String) -> Unit,
+    images: LazyPagingItems<NasaImage>,
+    onShowBottomSheet: (String, String, String, String, String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     LazyVerticalGrid(
@@ -57,19 +65,25 @@ fun NasaImageGrid(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        items(images) { nasaImageData ->
+        items(images.itemCount) { index ->
             GlideImage(
-                model = nasaImageData.url,
+                model = images[index]?.url,
                 contentDescription = "Nasa image",
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .clickable(onClick = {
-                        onShowBottomSheet(
-                            nasaImageData.id
-                        )
+                        images[index]?.let {
+                            onShowBottomSheet(
+                                it.title,
+                                it.url,
+                                it.description,
+                                it.photographer,
+                                it.location,
+                            )
+                        }
                     })
                     .size(100.dp)
-                )
+            )
         }
     }
 }
