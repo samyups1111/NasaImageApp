@@ -52,7 +52,8 @@ fun NasaImageDetailsBottomSheet(
         ) {
             Text(
                 text = photographer,
-                fontWeight = FontWeight.Light
+                fontWeight = FontWeight.Light,
+                modifier = Modifier.padding(end = 5.dp)
             )
             Text(
                 text = location,
