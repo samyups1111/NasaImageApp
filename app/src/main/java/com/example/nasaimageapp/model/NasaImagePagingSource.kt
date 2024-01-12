@@ -28,9 +28,9 @@ class NasaImagePagingSource @Inject constructor(
     @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
     override suspend fun load(params: LoadParams<Int>): LoadResult<Int, NasaImage> = withContext(coroutineDispatcher) {
         try {
-            val pageNumber = params.key ?: 0
+            val pageNumber = params.key ?: 1
 
-            val response = nasaImageService.getNasaImages(title = query)
+            val response = nasaImageService.getNasaImages(title = query, page = pageNumber)
             val body = response.body()
             val items = body?.collection?.items
 

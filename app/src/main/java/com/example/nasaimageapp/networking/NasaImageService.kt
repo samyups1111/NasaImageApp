@@ -10,5 +10,6 @@ interface NasaImageService {
     suspend fun getNasaImages(
         @Query("title") title: String = "nasa",
         @Query("media_type") mediaType: String = "image",
+        @Query("page") page: Int = 1,
     ): Response<NasaResponse>
 }
