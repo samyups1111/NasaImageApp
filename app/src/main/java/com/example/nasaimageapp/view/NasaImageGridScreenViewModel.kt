@@ -71,7 +71,9 @@ class NasaImageGridScreenViewModel @Inject constructor(
         searchQuery = query
     }
 
-    fun onActiveChange(isActive: Boolean) {} // Could probably remove
+    fun onActiveChange(isActive: Boolean) {
+        if (isActive) searchQuery = ""
+    }
 }
 
 sealed class BottomSheetState {
