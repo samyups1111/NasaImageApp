@@ -17,6 +17,8 @@ class NasaImagePagingSource @Inject constructor(
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO,
     ) : PagingSource<Int, NasaImage>() {
 
+    var query: String = ""
+
     override fun getRefreshKey(state: PagingState<Int, NasaImage>): Int? {
         return state.anchorPosition?.let {
             state.closestPageToPosition(it)?.nextKey?.minus(1)
@@ -28,7 +30,7 @@ class NasaImagePagingSource @Inject constructor(
         try {
             val pageNumber = params.key ?: 0
 
-            val response = nasaImageService.getNasaImages()
+            val response = nasaImageService.getNasaImages(title = query)
             val body = response.body()
             val items = body?.collection?.items
 

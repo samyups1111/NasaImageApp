@@ -10,7 +10,8 @@ class NasaImageRepository @Inject constructor(
     private val nasaImagePagingSource: NasaImagePagingSource,
 ) {
 
-    fun getNasaImages(): Flow<PagingData<NasaImage>> {
+    fun getNasaImages(query: String): Flow<PagingData<NasaImage>> {
+        nasaImagePagingSource.query = query
         return Pager(
             config = PagingConfig(
                 pageSize = 100,

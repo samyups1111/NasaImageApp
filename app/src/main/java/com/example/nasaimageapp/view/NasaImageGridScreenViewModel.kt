@@ -23,6 +23,9 @@ class NasaImageGridScreenViewModel @Inject constructor(
     var imageListState: MutableStateFlow<PagingData<NasaImage>> = MutableStateFlow(PagingData.empty())
         private set
 
+    var searchQuery by mutableStateOf("search...")
+        private set
+
     var bottomSheetState by mutableStateOf<BottomSheetState>(BottomSheetState.HIDE)
         private set
 
@@ -30,14 +33,14 @@ class NasaImageGridScreenViewModel @Inject constructor(
         onLoad()
     }
 
-    private fun onLoad() {
+    fun onLoad(query: String = "nasa") {
         viewModelScope.launch {
-            getNasaImages()
+            getNasaImages(query)
         }
     }
 
-    private suspend fun getNasaImages() {
-        getNasaImagesUseCase.invoke()
+    private suspend fun getNasaImages(query: String) {
+        getNasaImagesUseCase.invoke(query)
             .distinctUntilChanged()
             .cachedIn(viewModelScope)
             .collect {
@@ -64,6 +67,11 @@ class NasaImageGridScreenViewModel @Inject constructor(
             location = location
         )
     }
+    fun onUpdateQuery(query: String) {
+        searchQuery = query
+    }
+
+    fun onActiveChange(isActive: Boolean) {} // Could probably remove
 }
 
 sealed class BottomSheetState {

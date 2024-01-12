@@ -8,7 +8,7 @@ class GetNasaImagesUseCase @Inject constructor(
     private val repository: NasaImageRepository
 ) {
 
-    fun invoke(): Flow<PagingData<NasaImage>> {
-        return repository.getNasaImages()
+    fun invoke(query: String): Flow<PagingData<NasaImage>> {
+        return repository.getNasaImages(query)
     }
 }
