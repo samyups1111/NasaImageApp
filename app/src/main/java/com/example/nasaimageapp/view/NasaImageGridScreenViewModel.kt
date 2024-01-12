@@ -34,6 +34,7 @@ class NasaImageGridScreenViewModel @Inject constructor(
     }
 
     fun onLoad(query: String = "nasa") {
+        searchQuery = "search..."
         viewModelScope.launch {
             getNasaImages(query)
         }
