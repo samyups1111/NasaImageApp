@@ -3,7 +3,6 @@ package com.example.nasaimageapp.view
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -46,9 +45,8 @@ fun NasaImageGridScreen(
                     images = nasaImagePagingItems,
                     onShowBottomSheet = { title: String, url: String, description: String, photographer: String, location: String -> viewModel.showBottomSheet(title, url, description, photographer, location) },
                     modifier = Modifier
-                        .height(700.dp)
+                        .weight(1F)
                 )
-                Spacer(modifier = Modifier.weight(1F))
                 SearchBar(
                     query = viewModel.searchQuery,
                     active = true,
@@ -57,6 +55,7 @@ fun NasaImageGridScreen(
                     onSearch = { query: String -> viewModel.onLoad(query) },
                     content = {},
                     modifier = Modifier
+                        .height(75.dp)
                         .padding(3.dp)
                         .border(
                             width = 1.dp,
