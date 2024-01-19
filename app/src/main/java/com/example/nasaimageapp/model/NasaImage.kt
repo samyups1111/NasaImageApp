@@ -12,8 +12,8 @@ data class NasaImage(
 )
 
 data class NetworkImageData(
-    @Json(name = "nasa_id")
-    val nasa_id: String, // tried renaming to "id" but there seems to be an issue
+    @field:Json(name = "nasa_id")
+    val nasaId: String,
     val title: String?,
     val description: String?,
     val photographer: String?,
@@ -21,8 +21,8 @@ data class NetworkImageData(
 )
 
 data class NasaImageLinkObject(
-    @Json(name = "href")
-    val href: String?, // tried changing the name to "url" but it's not working. Curious what I'm doing wrong?
+    @field:Json(name = "href")
+    val imgUrl: String?,
 )
 
 data class NasaItemObject(
@@ -38,21 +38,15 @@ data class NasaResponse(
     val collection: Collection
 )
 
-fun List<NasaItemObject>.toNasaImageDataList(): List<NasaImage> {
-    val nasaImageDataList = mutableListOf<NasaImage>()
-    this.forEach { nasaItemObject ->
-        nasaItemObject.links.first().href?.let { url ->
-            nasaImageDataList.add(
-                NasaImage(
-                    id = nasaItemObject.data.first().nasa_id,
-                    title = nasaItemObject.data.first().title ?: "no title found",
-                    description = nasaItemObject.data.first().description ?: "no description found",
-                    photographer = nasaItemObject.data.first().photographer ?: "no photographer found",
-                    location = nasaItemObject.data.first().location ?: "no location found",
-                    url = url,
-                )
-            )
-        }
+fun NasaItemObject.toNasaImageData(): NasaImage? {
+    return this.links.first().imgUrl?.let {
+        NasaImage(
+            id = this.data.first().nasaId,
+            title = this.data.first().title ?: "no title found",
+            description = this.data.first().description ?: "no description found",
+            photographer = this.data.first().photographer ?: "no photographer found",
+            location = this.data.first().location ?: "no location found",
+            url = it
+        )
     }
-    return nasaImageDataList.toList()
 }

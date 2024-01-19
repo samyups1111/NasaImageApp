@@ -5,14 +5,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.nasaimageapp.model.GetNasaImagesUseCase
-import com.example.nasaimageapp.model.NasaImage
+import com.example.nasaimageapp.model.NasaImagePagingSource
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.flatMapLatest
 import javax.inject.Inject
 
 @HiltViewModel
@@ -20,37 +21,33 @@ class NasaImageGridScreenViewModel @Inject constructor(
     private val getNasaImagesUseCase: GetNasaImagesUseCase,
 ) : ViewModel() {
 
-    var imageListState: MutableStateFlow<PagingData<NasaImage>> = MutableStateFlow(PagingData.empty())
+    var searchBarQuery by mutableStateOf("")
         private set
 
-    var searchQuery by mutableStateOf("search...")
-        private set
+    private var newSearchQuery = MutableStateFlow("")
 
-    var bottomSheetState by mutableStateOf<BottomSheetState>(BottomSheetState.HIDE)
-        private set
-
-    init {
-        onLoad()
-    }
-
-    fun onLoad(query: String = "nasa") {
-        searchQuery = "search..."
-        viewModelScope.launch {
-            getNasaImages(query)
-        }
-    }
-
-    private suspend fun getNasaImages(query: String) {
-        getNasaImagesUseCase.invoke(query)
-            .distinctUntilChanged()
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val pagingDataFlow = newSearchQuery.flatMapLatest { query ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 100,
+                prefetchDistance = 2,
+            ),
+            pagingSourceFactory = { NasaImagePagingSource(query, getNasaImagesUseCase) }
+        )
+            .flow
             .cachedIn(viewModelScope)
-            .collect {
-                imageListState.value = it
-            }
+    }
+
+    var nasaImageDetailsBottomSheetState by mutableStateOf<NasaImageDetailsBottomSheetState>(NasaImageDetailsBottomSheetState.HIDE)
+        private set
+
+    fun search(query: String = "nasa") {
+        newSearchQuery.value = query
     }
 
     fun hideBottomSheet() {
-        bottomSheetState = BottomSheetState.HIDE
+        nasaImageDetailsBottomSheetState = NasaImageDetailsBottomSheetState.HIDE
     }
 
     fun showBottomSheet(
@@ -60,7 +57,7 @@ class NasaImageGridScreenViewModel @Inject constructor(
         photographer: String,
         location: String,
     ) {
-        bottomSheetState = BottomSheetState.SHOW(
+        nasaImageDetailsBottomSheetState = NasaImageDetailsBottomSheetState.SHOW(
             title = title,
             url = url,
             description = description,
@@ -68,23 +65,19 @@ class NasaImageGridScreenViewModel @Inject constructor(
             location = location
         )
     }
-    fun onUpdateQuery(query: String) {
-        searchQuery = query
-    }
-
-    fun onActiveChange(isActive: Boolean) {
-        if (isActive) searchQuery = ""
+    fun updateSearchBarQuery(query: String) {
+        searchBarQuery = query
     }
 }
 
-sealed class BottomSheetState {
+sealed class NasaImageDetailsBottomSheetState {
     data class SHOW(
         val title: String,
         val url: String,
         val description: String,
         val photographer: String,
         val location: String,
-    ) : BottomSheetState()
+    ) : NasaImageDetailsBottomSheetState()
 
-    object HIDE : BottomSheetState()
+    object HIDE : NasaImageDetailsBottomSheetState()
 }

@@ -1,5 +1,7 @@
 package com.example.nasaimageapp.view
 
+import android.os.Build
+import androidx.annotation.RequiresExtension
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -27,13 +29,14 @@ import com.bumptech.glide.integration.compose.ExperimentalGlideComposeApi
 import com.bumptech.glide.integration.compose.GlideImage
 import com.example.nasaimageapp.model.NasaImage
 
+@RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NasaImageGridScreen(
     modifier: Modifier = Modifier,
     viewModel: NasaImageGridScreenViewModel = hiltViewModel(),
 ) {
-    val nasaImagePagingItems: LazyPagingItems<NasaImage> = viewModel.imageListState.collectAsLazyPagingItems()
+    val nasaImagePagingItems: LazyPagingItems<NasaImage> = viewModel.pagingDataFlow.collectAsLazyPagingItems()
 
     when (nasaImagePagingItems.loadState.refresh) {
         is LoadState.NotLoading -> {
@@ -48,11 +51,12 @@ fun NasaImageGridScreen(
                         .weight(1F)
                 )
                 SearchBar(
-                    query = viewModel.searchQuery,
+                    query = viewModel.searchBarQuery,
                     active = true,
-                    onActiveChange = { isActive: Boolean -> viewModel.onActiveChange(isActive) },
-                    onQueryChange = { query: String -> viewModel.onUpdateQuery(query) },
-                    onSearch = { query: String -> viewModel.onLoad(query) },
+                    onActiveChange = { },
+                    onQueryChange = { query: String -> viewModel.updateSearchBarQuery(query) },
+                    onSearch = { query: String -> viewModel.search(query) },
+                    placeholder = { Text(text = "search...") },
                     content = {},
                     modifier = Modifier
                         .height(75.dp)
@@ -64,8 +68,8 @@ fun NasaImageGridScreen(
                         )
                 )
             }
-            if (viewModel.bottomSheetState is BottomSheetState.SHOW) {
-                val selectedImage = viewModel.bottomSheetState as BottomSheetState.SHOW
+            if (viewModel.nasaImageDetailsBottomSheetState is NasaImageDetailsBottomSheetState.SHOW) {
+                val selectedImage = viewModel.nasaImageDetailsBottomSheetState as NasaImageDetailsBottomSheetState.SHOW
                 NasaImageDetailsBottomSheet(
                     title = selectedImage.title,
                     url = selectedImage.url,

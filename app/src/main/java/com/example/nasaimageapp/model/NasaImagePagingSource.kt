@@ -5,19 +5,12 @@ import android.os.Build
 import androidx.annotation.RequiresExtension
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import com.example.nasaimageapp.networking.NasaImageService
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import java.io.IOException
-import javax.inject.Inject
 
-class NasaImagePagingSource @Inject constructor(
-    private val nasaImageService: NasaImageService,
-    private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.IO,
+class NasaImagePagingSource(
+    private val query: String,
+    private val getNasaImagesUseCase: GetNasaImagesUseCase,
     ) : PagingSource<Int, NasaImage>() {
-
-    var query: String = ""
 
     override fun getRefreshKey(state: PagingState<Int, NasaImage>): Int? {
         return state.anchorPosition?.let {
@@ -26,20 +19,18 @@ class NasaImagePagingSource @Inject constructor(
     }
 
     @RequiresExtension(extension = Build.VERSION_CODES.S, version = 7)
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, NasaImage> = withContext(coroutineDispatcher) {
-        try {
-            val pageNumber = params.key ?: 1
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, NasaImage> {
 
-            val response = nasaImageService.getNasaImages(title = query, page = pageNumber)
-            val body = response.body()
-            val items = body?.collection?.items
+        val pageNumber = params.key ?: 1
+        val items = getNasaImagesUseCase.invoke(query, pageNumber)
 
-            val prevKey = if (pageNumber > 0) pageNumber -1 else null
+        val prevKey = if (pageNumber > 0) pageNumber -1 else null
 
-            val nextKey = if (!items.isNullOrEmpty()) pageNumber + 1 else null
+        val nextKey = if (items.isNotEmpty()) pageNumber + 1 else null
 
+        return try {
             LoadResult.Page(
-                data = items!!.toNasaImageDataList(),
+                data = items,
                 prevKey = prevKey,
                 nextKey = nextKey
             )
