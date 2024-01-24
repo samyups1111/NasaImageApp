@@ -5,11 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.Pager
-import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import com.example.nasaimageapp.model.GetNasaImagesUseCase
-import com.example.nasaimageapp.model.NasaImagePagingSource
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -28,14 +25,7 @@ class NasaImageGridScreenViewModel @Inject constructor(
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val pagingDataFlow = newSearchQuery.flatMapLatest { query ->
-        Pager(
-            config = PagingConfig(
-                pageSize = 100,
-                prefetchDistance = 2,
-            ),
-            pagingSourceFactory = { NasaImagePagingSource(query, getNasaImagesUseCase) }
-        )
-            .flow
+        getNasaImagesUseCase.invoke(query)
             .cachedIn(viewModelScope)
     }
 

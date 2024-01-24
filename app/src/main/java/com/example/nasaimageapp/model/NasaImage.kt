@@ -1,9 +1,12 @@
 package com.example.nasaimageapp.model
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.squareup.moshi.Json
 
+@Entity(tableName = "nasaImage")
 data class NasaImage(
-    val id: String,
+    @PrimaryKey val id: String,
     val title: String,
     val description: String,
     val photographer: String,
